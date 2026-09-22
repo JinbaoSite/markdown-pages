@@ -17,11 +17,15 @@ test('builds a complete blog from markdown folders', async () => {
     const result = await buildSite({ source, output, title: 'Test Blog', baseUrl: '/docs/', cname: 'example.com' });
     assert.deepEqual({ posts: result.posts, categories: result.categories }, { posts: 1, categories: 1 });
     const home = await readFile(path.join(output, 'index.html'), 'utf8');
+    const categoryPage = await readFile(path.join(output, 'llm/index.html'), 'utf8');
     const article = await readFile(path.join(output, 'llm/attention/index.html'), 'utf8');
     const legacyArticle = await readFile(path.join(output, 'llm/attention.html'), 'utf8');
     assert.match(home, /Test Blog/);
     assert.match(home, /大语言模型/);
-    assert.match(home, /href="\/docs\/llm\/attention\/"/);
+    assert.doesNotMatch(home, /href="\/docs\/llm\/attention\/"/);
+    assert.match(categoryPage, /href="\/docs\/llm\/attention\/"/);
+    assert.match(home, /探索技术领域/);
+    assert.doesNotMatch(home, /最近文章/);
     assert.match(article, /<aside class="article-toc">/);
     assert.match(article, /<mjx-container/);
     assert.equal(legacyArticle, article);

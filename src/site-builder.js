@@ -6,8 +6,12 @@ import { renderMarkdownWithMetadata } from './index.js';
 import { siteStyles } from './site-styles.js';
 
 const CATEGORY_META = {
-  ml: ['机器学习', 'ML'], dl: ['深度学习', 'DL'], llm: ['LLM', 'LLM'],
-  recsys: ['推荐算法', 'RS'], agent: ['Agent', 'AI'], projects: ['项目', 'PX']
+  ml: ['机器学习', 'ML', '监督学习、集成学习与特征工程'],
+  dl: ['深度学习', 'DL', '神经网络架构、训练方法与工程实践'],
+  llm: ['LLM', 'LLM', '大语言模型、RAG 与推理优化'],
+  recsys: ['推荐算法', 'RS', '召回、排序、特征交互与多目标学习'],
+  agent: ['Agent', 'AI', '工具调用、工作流与智能体系统'],
+  projects: ['项目', 'PX', '系统设计、数据竞赛与工程项目']
 };
 
 const escapeHtml = (value = '') => String(value)
@@ -64,11 +68,13 @@ function firstHeading(markdown, fallback) {
 }
 
 function categoryInfo(slug, configured = {}) {
-  const [defaultName, defaultIcon] = CATEGORY_META[slug] ?? [slug === 'posts' ? '文章' : slug, 'MD'];
+  const [defaultName, defaultIcon, defaultDescription] = CATEGORY_META[slug]
+    ?? [slug === 'posts' ? '文章' : slug, 'MD', '学习笔记与技术文章'];
   const value = configured[slug];
   const name = typeof value === 'string' ? value : value?.title ?? value?.name ?? defaultName;
   const icon = typeof value === 'object' ? value?.icon ?? defaultIcon : defaultIcon;
-  return { slug, name, icon };
+  const description = typeof value === 'object' ? value?.description ?? defaultDescription : defaultDescription;
+  return { slug, name, icon, description };
 }
 
 function formatDate(value) {
@@ -167,11 +173,14 @@ export async function buildSite(options = {}) {
   const sorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.order - a.order);
   const categoryCards = categories.map(category => {
     const count = posts.filter(post => post.category.slug === category.slug).length;
-    return `<a class="category-card" href="${href(baseUrl, `${category.slug}/`)}"><span>${category.icon}</span><div><h3>${escapeHtml(category.name)}</h3><p>${count} 篇文章</p></div></a>`;
+    return `<a class="category-card" href="${href(baseUrl, `${category.slug}/`)}"><span>${escapeHtml(category.icon)}</span><div><h3>${escapeHtml(category.name)}</h3><p>${escapeHtml(category.description)}</p><small>${count} 篇文章 <b>→</b></small></div></a>`;
   }).join('');
-  const homeBody = `<main class="home container"><section class="hero"><p class="eyebrow">WELCOME TO MY BLOG</p><h1>${escapeHtml(config.description)}</h1><pre><code><span>const</span> engineer = { name: <b>"${escapeHtml(config.author)}"</b>, focus: [<b>"Learning"</b>, <b>"Building"</b>] };</code></pre></section>
-  <section><h2 class="section-title">技术分类</h2><div class="category-grid">${categoryCards}</div></section>
-  <section><h2 class="section-title">最近文章</h2><div class="post-list">${sorted.slice(0, 10).map(post => postCard(post, baseUrl)).join('')}</div></section></main>`;
+  const homeBody = `<main class="home container"><section class="home-hero"><div class="hero-copy"><p class="eyebrow">LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><p class="hero-description">${escapeHtml(config.description)}</p><a class="explore-link" href="#topics">探索技术领域 <span>↓</span></a></div><div class="hero-panel" aria-label="作者信息"><div class="terminal-bar"><i></i><i></i><i></i><span>profile.js</span></div><pre><code><em>const</em> engineer = {
+  name: <strong>"${escapeHtml(config.author)}"</strong>,
+  mindset: <strong>"keep building"</strong>,
+  status: <strong>true</strong>
+};</code></pre></div></section>
+  <section id="topics" class="topics-section"><div class="topics-heading"><div><p class="eyebrow">KNOWLEDGE MAP</p><h2>探索技术领域</h2></div><p>从基础原理到工程实践，按主题沉淀可复用的知识。</p></div><div class="category-grid">${categoryCards}</div></section></main>`;
   await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home' }));
 
   for (const category of categories) {
