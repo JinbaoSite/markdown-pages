@@ -1,0 +1,34 @@
+{
+  "name": "markdown-pages",
+  "version": "1.0.0",
+  "description": "Build and deploy a Markdown-only repository as a GitHub Pages blog",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JinbaoSite/markdown-pages.git"
+  },
+  "homepage": "https://github.com/JinbaoSite/markdown-pages#readme",
+  "bugs": {
+    "url": "https://github.com/JinbaoSite/markdown-pages/issues"
+  },
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "bin": {
+    "md2html": "bin/md2html.js",
+    "markdown-pages": "bin/markdown-blog.js",
+    "markdown-blog": "bin/markdown-blog.js"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "demo": "node bin/md2html.js examples/demo.md -o examples/demo.html",
+    "build:blog": "node bin/markdown-blog.js build --source examples/content --output dist"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "js-yaml": "^4.1.0",
+    "markdown-it": "^15.0.1",
+    "markdown-it-highlightjs": "^4.3.0",
+    "markdown-it-mathjax3": "^5.2.0"
+  }
+}

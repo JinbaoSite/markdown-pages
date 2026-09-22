@@ -1,0 +1,51 @@
+name: Markdown Pages
+description: 将只包含 Markdown 的仓库构建成可部署到 GitHub Pages 的博客
+inputs:
+  source:
+    description: Markdown 内容目录
+    default: .
+  output:
+    description: 静态网站输出目录
+    default: _site
+  title:
+    description: 博客名称
+    default: ''
+  author:
+    description: 作者名称
+    default: ''
+  description:
+    description: 博客介绍
+    default: ''
+  base-url:
+    description: GitHub Project Pages 的子路径，例如 /repository-name/
+    default: ''
+  cname:
+    description: 可选自定义域名
+    default: ''
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: ${{ github.action_path }}/package-lock.json
+    - shell: bash
+      run: npm ci --prefix "$GITHUB_ACTION_PATH"
+    - shell: bash
+      env:
+        INPUT_SOURCE: ${{ inputs.source }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_AUTHOR: ${{ inputs.author }}
+        INPUT_DESCRIPTION: ${{ inputs.description }}
+        INPUT_BASE_URL: ${{ inputs.base-url }}
+        INPUT_CNAME: ${{ inputs.cname }}
+      run: |
+        args=(build --source "$GITHUB_WORKSPACE/$INPUT_SOURCE" --output "$GITHUB_WORKSPACE/$INPUT_OUTPUT")
+        if [[ -n "$INPUT_TITLE" ]]; then args+=(--title "$INPUT_TITLE"); fi
+        if [[ -n "$INPUT_AUTHOR" ]]; then args+=(--author "$INPUT_AUTHOR"); fi
+        if [[ -n "$INPUT_DESCRIPTION" ]]; then args+=(--description "$INPUT_DESCRIPTION"); fi
+        if [[ -n "$INPUT_BASE_URL" ]]; then args+=(--base-url "$INPUT_BASE_URL"); fi
+        if [[ -n "$INPUT_CNAME" ]]; then args+=(--cname "$INPUT_CNAME"); fi
+        node "$GITHUB_ACTION_PATH/bin/markdown-blog.js" "${args[@]}"

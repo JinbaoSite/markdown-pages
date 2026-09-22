@@ -1,0 +1,12 @@
+title: Markdown Blog
+author: Jinbao
+description: 一个由 Markdown 与 GitHub Actions 驱动的技术博客
+base_url: /
+
+categories:
+  llm:
+    title: LLM
+    icon: LLM
+  recsys:
+    title: 推荐算法
+    icon: RS
