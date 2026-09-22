@@ -83,11 +83,14 @@ function formatDate(value) {
   return Number.isNaN(date.valueOf()) ? String(value) : date.toISOString().slice(0, 10);
 }
 
-function layout({ config, title, description, body, active = '', extraClass = '' }) {
+function layout({ config, title, description, body, active = '', extraClass = '', minimalNav = false }) {
   const base = config.baseUrl;
-  const nav = config.categories.map(category =>
+  const nav = minimalNav ? '' : config.categories.map(category =>
     `<a${active === category.slug ? ' class="active"' : ''} href="${href(base, `${category.slug}/`)}">${escapeHtml(category.name)}</a>`
   ).join('');
+  const navigation = minimalNav ? '' : `<nav class="desktop-nav"><a${active === 'home' ? ' class="active"' : ''} href="${base}">首页</a>${nav}<a${active === 'about' ? ' class="active"' : ''} href="${href(base, 'about/')}">关于</a></nav>
+<button class="menu-toggle" aria-label="打开导航" aria-expanded="false"><span></span><span></span><span></span></button>`;
+  const mobileNavigation = minimalNav ? '' : `<nav class="mobile-nav"><a href="${base}">首页</a>${nav}<a href="${href(base, 'about/')}">关于</a></nav>`;
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)} · ${escapeHtml(config.title)}</title>
@@ -95,9 +98,8 @@ function layout({ config, title, description, body, active = '', extraClass = ''
 <link rel="stylesheet" href="${href(base, 'assets/blog.css')}"></head>
 <body class="${extraClass}"><header class="site-header"><div class="header-inner">
 <a class="brand" href="${base}"><span class="brand-icon">${escapeHtml(config.logo)}</span>${escapeHtml(config.title)}</a>
-<nav class="desktop-nav"><a${active === 'home' ? ' class="active"' : ''} href="${base}">首页</a>${nav}<a${active === 'about' ? ' class="active"' : ''} href="${href(base, 'about/')}">关于</a></nav>
-<button class="menu-toggle" aria-label="打开导航" aria-expanded="false"><span></span><span></span><span></span></button>
-</div><nav class="mobile-nav"><a href="${base}">首页</a>${nav}<a href="${href(base, 'about/')}">关于</a></nav></header>
+${navigation}
+</div>${mobileNavigation}</header>
 ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</footer>
 <script src="${href(base, 'assets/blog.js')}"></script></body></html>`;
 }
@@ -171,17 +173,10 @@ export async function buildSite(options = {}) {
   await writeFile(path.join(output, 'assets/blog.js'), `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});`);
 
   const sorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.order - a.order);
-  const categoryCards = categories.map(category => {
-    const count = posts.filter(post => post.category.slug === category.slug).length;
-    return `<a class="category-card" href="${href(baseUrl, `${category.slug}/`)}"><span>${escapeHtml(category.icon)}</span><div><h3>${escapeHtml(category.name)}</h3><p>${escapeHtml(category.description)}</p><small>${count} 篇文章 <b>→</b></small></div></a>`;
-  }).join('');
-  const homeBody = `<main class="home container"><section class="home-hero"><div class="hero-copy"><p class="eyebrow">LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><p class="hero-description">${escapeHtml(config.description)}</p><a class="explore-link" href="#topics">探索技术领域 <span>↓</span></a></div><div class="hero-panel" aria-label="作者信息"><div class="terminal-bar"><i></i><i></i><i></i><span>profile.js</span></div><pre><code><em>const</em> engineer = {
-  name: <strong>"${escapeHtml(config.author)}"</strong>,
-  mindset: <strong>"keep building"</strong>,
-  status: <strong>true</strong>
-};</code></pre></div></section>
-  <section id="topics" class="topics-section"><div class="topics-heading"><div><p class="eyebrow">KNOWLEDGE MAP</p><h2>探索技术领域</h2></div><p>从基础原理到工程实践，按主题沉淀可复用的知识。</p></div><div class="category-grid">${categoryCards}</div></section></main>`;
-  await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home' }));
+  const fallingTokens = ['const', 'ideas', '=', '[', 'learn', 'build', 'share', ']', 'async', 'await', 'run()', '{}'];
+  const rain = fallingTokens.map((token, index) => `<span style="--i:${index}">${escapeHtml(token)}</span>`).join('');
+  const homeBody = `<main class="animation-home"><div class="code-rain" aria-hidden="true">${rain}</div><section class="code-stage" aria-label="代码落下并运行的动画"><div class="stage-heading"><p>LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span></div><div class="code-machine"><div class="machine-bar"><i></i><i></i><i></i><span>build.js</span><b>CSS ANIMATION</b></div><div class="assembled-code"><span class="code-line line-1"><em>const</em> knowledge = [];</span><span class="code-line line-2"><em>await</em> learn(knowledge);</span><span class="code-line line-3">knowledge.<strong>push</strong>(idea);</span><span class="code-line line-4"><em>return</em> publish(knowledge);</span></div><div class="run-console"><span class="run-command">$ npm run build</span><span class="run-progress"><i></i></span><span class="run-result">✓ Blog compiled successfully</span><span class="run-cursor"></span></div></div></section></main>`;
+  await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page', minimalNav: true }));
 
   for (const category of categories) {
     const categoryPosts = sorted.filter(post => post.category.slug === category.slug);
