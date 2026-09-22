@@ -15,6 +15,26 @@ const CATEGORY_META = {
   projects: ['项目', 'PX', '系统设计、数据竞赛与工程项目']
 };
 
+const LUCIDE_PATHS = {
+  home: '<path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  folder: '<path d="M3 6h5l2 2h11v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  brain: '<path d="M9.5 4A2.5 2.5 0 0 0 7 6.5v.2A3 3 0 0 0 5 12a3 3 0 0 0 2 5.3v.2A2.5 2.5 0 0 0 9.5 20H12V4Z"/><path d="M14.5 4A2.5 2.5 0 0 1 17 6.5v.2a3 3 0 0 1 2 5.3v.3a3 3 0 0 1-2 5v.2a2.5 2.5 0 0 1-2.5 2.5H12V4Z"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/>',
+  bot: '<rect width="16" height="12" x="4" y="8" rx="2"/><path d="M9 12h.01M15 12h.01M9 16h6M12 2v3M8 5h8"/>',
+  code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  terminal: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>'
+};
+
+function lucide(name, className = '') {
+  return `<svg class="lucide ${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${LUCIDE_PATHS[name] ?? LUCIDE_PATHS.code}</svg>`;
+}
+
+function categoryIcon(slug) {
+  return lucide({ ml: 'brain', dl: 'brain', llm: 'code', recsys: 'database', agent: 'bot', projects: 'terminal' }[slug] ?? 'folder');
+}
+
 const siteScript = `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});`;
 
 const escapeHtml = (value = '') => String(value)
@@ -89,18 +109,18 @@ function formatDate(value) {
 function layout({ config, title, description, body, active = '', extraClass = '', minimalNav = false }) {
   const base = config.baseUrl;
   const nav = minimalNav ? '' : config.categories.map(category =>
-    `<a${active === category.slug ? ' class="active"' : ''} href="${href(base, `${category.slug}/`)}">${escapeHtml(category.name)}</a>`
+    `<a${active === category.slug ? ' class="active"' : ''} href="${href(base, `${category.slug}/`)}">${categoryIcon(category.slug)}${escapeHtml(category.name)}</a>`
   ).join('');
-  const navigation = minimalNav ? '' : `<nav class="desktop-nav"><a${active === 'home' ? ' class="active"' : ''} href="${base}">首页</a>${nav}<a${active === 'about' ? ' class="active"' : ''} href="${href(base, 'about/')}">关于</a></nav>
+  const navigation = minimalNav ? '' : `<nav class="desktop-nav"><a${active === 'home' ? ' class="active"' : ''} href="${base}">${lucide('home')}首页</a>${nav}<a${active === 'about' ? ' class="active"' : ''} href="${href(base, 'about/')}">${lucide('info')}关于</a></nav>
 <button class="menu-toggle" aria-label="打开导航" aria-expanded="false"><span></span><span></span><span></span></button>`;
-  const mobileNavigation = minimalNav ? '' : `<nav class="mobile-nav"><a href="${base}">首页</a>${nav}<a href="${href(base, 'about/')}">关于</a></nav>`;
+  const mobileNavigation = minimalNav ? '' : `<nav class="mobile-nav"><a href="${base}">${lucide('home')}首页</a>${nav}<a href="${href(base, 'about/')}">${lucide('info')}关于</a></nav>`;
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)} · ${escapeHtml(config.title)}</title>
 <meta name="description" content="${escapeHtml(description || config.description)}">
 <link rel="stylesheet" href="${href(base, `assets/blog.css?v=${config.assetVersion}`)}"></head>
 <body class="${extraClass}"><header class="site-header"><div class="header-inner">
-<a class="brand" href="${base}"><span class="brand-icon">${escapeHtml(config.logo)}</span>${escapeHtml(config.title)}</a>
+<a class="brand" href="${base}"><span class="brand-icon">${lucide('book')}</span>${escapeHtml(config.title)}</a>
 ${navigation}
 </div>${mobileNavigation}</header>
 ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</footer>
@@ -180,11 +200,11 @@ export async function buildSite(options = {}) {
   const fallingTokens = ['const', 'ideas', '=', '[', 'learn', 'build', 'share', ']', 'async', 'await', 'run()', '{}'];
   const rain = fallingTokens.map((token, index) => `<span style="--i:${index}">${escapeHtml(token)}</span>`).join('');
   const homeBody = `<main class="animation-home"><div class="code-rain" aria-hidden="true">${rain}</div><section class="code-stage" aria-label="代码落下并运行的动画"><div class="stage-heading"><p>LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span></div><div class="code-machine"><div class="machine-bar"><i></i><i></i><i></i><span>build.js</span><b>CSS ANIMATION</b></div><div class="assembled-code"><span class="code-line line-1"><em>const</em> knowledge = [];</span><span class="code-line line-2"><em>await</em> learn(knowledge);</span><span class="code-line line-3">knowledge.<strong>push</strong>(idea);</span><span class="code-line line-4"><em>return</em> publish(knowledge);</span></div><div class="run-console"><span class="run-command">$ npm run build</span><span class="run-progress"><i></i></span><span class="run-result">✓ Blog compiled successfully</span><span class="run-cursor"></span></div></div></section></main>`;
-  await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page', minimalNav: true }));
+  await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page' }));
 
   for (const category of categories) {
     const categoryPosts = sorted.filter(post => post.category.slug === category.slug);
-    const body = `<main class="container list-page"><p class="eyebrow">${category.icon} CATEGORY</p><h1>${escapeHtml(category.name)}</h1><p>${categoryPosts.length} 篇文章</p><div class="post-list">${categoryPosts.map(post => postCard(post, baseUrl)).join('')}</div></main>`;
+    const body = `<main class="container list-page"><p class="eyebrow">${categoryIcon(category.slug)} CATEGORY</p><h1>${escapeHtml(category.name)}</h1><p>${categoryPosts.length} 篇文章</p><div class="post-list">${categoryPosts.map(post => postCard(post, baseUrl)).join('')}</div></main>`;
     const dir = path.join(output, category.slug);
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, 'index.html'), layout({ config, title: category.name, body, active: category.slug }));
@@ -193,7 +213,7 @@ export async function buildSite(options = {}) {
   for (const post of posts) {
     const rendered = renderMarkdownWithMetadata(post.markdown, { allowHtml: false });
     const content = rewriteMarkdownLinks(rendered.html);
-    const body = `<div class="article-shell">${tocHtml(rendered.headings)}<main class="article"><div class="article-meta"><a href="${href(baseUrl, `${post.category.slug}/`)}">${post.category.icon} ${escapeHtml(post.category.name)}</a>${post.date ? `<time>${post.date}</time>` : ''}</div><article class="markdown-body">${content}</article></main></div>`;
+    const body = `<div class="article-shell">${tocHtml(rendered.headings)}<main class="article"><div class="article-meta"><a href="${href(baseUrl, `${post.category.slug}/`)}">${categoryIcon(post.category.slug)}${escapeHtml(post.category.name)}</a>${post.date ? `<time>${post.date}</time>` : ''}</div><article class="markdown-body">${content}</article></main></div>`;
     const document = layout({ config, title: post.title, description: post.description, body, active: post.category.slug, extraClass: 'article-page' });
     const cleanTarget = path.join(output, post.url, 'index.html');
     const legacyTarget = path.join(output, post.legacyUrl);
