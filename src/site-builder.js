@@ -143,6 +143,15 @@ function rewriteMarkdownLinks(html) {
   return html.replace(/href="([^"#:?]+)\.md(#[^"]*)?"/g, 'href="$1/$2"');
 }
 
+function rewriteSitePaths(html, baseUrl) {
+  if (baseUrl === '/') return html;
+  const prefix = baseUrl.replace(/\/$/, '');
+  return html.replace(/\b(src|href)="\/(?!\/)([^"]*)"/g, (match, attribute, target) => {
+    if (`/${target}`.startsWith(`${prefix}/`)) return match;
+    return `${attribute}="${prefix}/${target}"`;
+  });
+}
+
 export async function buildSite(options = {}) {
   const source = path.resolve(options.source ?? '.');
   const output = path.resolve(options.output ?? '_site');
@@ -155,7 +164,8 @@ export async function buildSite(options = {}) {
   const files = await walkSource(source, source, output);
   const posts = [];
   for (const relative of files.markdown.sort()) {
-    if (path.basename(relative).toLowerCase() === 'readme.md') continue;
+    const basename = path.basename(relative).toLowerCase();
+    if (basename === 'readme.md' || basename === 'index.md') continue;
     const raw = await readFile(path.join(source, relative), 'utf8');
     const parsed = matter(raw);
     if (parsed.data.draft === true) continue;
@@ -212,7 +222,7 @@ export async function buildSite(options = {}) {
 
   for (const post of posts) {
     const rendered = renderMarkdownWithMetadata(post.markdown, { allowHtml: false });
-    const content = rewriteMarkdownLinks(rendered.html);
+    const content = rewriteSitePaths(rewriteMarkdownLinks(rendered.html), baseUrl);
     const body = `<div class="article-shell">${tocHtml(rendered.headings)}<main class="article"><div class="article-meta"><a href="${href(baseUrl, `${post.category.slug}/`)}">${categoryIcon(post.category.slug)}${escapeHtml(post.category.name)}</a>${post.date ? `<time>${post.date}</time>` : ''}</div><article class="markdown-body">${content}</article></main></div>`;
     const document = layout({ config, title: post.title, description: post.description, body, active: post.category.slug, extraClass: 'article-page' });
     const cleanTarget = path.join(output, post.url, 'index.html');
