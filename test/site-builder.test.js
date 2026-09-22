@@ -30,6 +30,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.doesNotMatch(home, /class="category-card"/);
     assert.match(home, /class="code-rain"/);
     assert.match(home, /Blog compiled successfully/);
+    assert.match(home, /assets\/blog\.css\?v=[a-f0-9]{10}/);
     assert.match(article, /<aside class="article-toc">/);
     assert.match(article, /<mjx-container/);
     assert.equal(legacyArticle, article);

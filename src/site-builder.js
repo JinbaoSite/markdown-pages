@@ -1,4 +1,5 @@
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import matter from 'gray-matter';
 import { load as parseYaml } from 'js-yaml';
@@ -13,6 +14,8 @@ const CATEGORY_META = {
   agent: ['Agent', 'AI', '工具调用、工作流与智能体系统'],
   projects: ['项目', 'PX', '系统设计、数据竞赛与工程项目']
 };
+
+const siteScript = `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});`;
 
 const escapeHtml = (value = '') => String(value)
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -95,13 +98,13 @@ function layout({ config, title, description, body, active = '', extraClass = ''
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(title)} · ${escapeHtml(config.title)}</title>
 <meta name="description" content="${escapeHtml(description || config.description)}">
-<link rel="stylesheet" href="${href(base, 'assets/blog.css')}"></head>
+<link rel="stylesheet" href="${href(base, `assets/blog.css?v=${config.assetVersion}`)}"></head>
 <body class="${extraClass}"><header class="site-header"><div class="header-inner">
 <a class="brand" href="${base}"><span class="brand-icon">${escapeHtml(config.logo)}</span>${escapeHtml(config.title)}</a>
 ${navigation}
 </div>${mobileNavigation}</header>
 ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</footer>
-<script src="${href(base, 'assets/blog.js')}"></script></body></html>`;
+<script src="${href(base, `assets/blog.js?v=${config.assetVersion}`)}"></script></body></html>`;
 }
 
 function postCard(post, base) {
@@ -159,7 +162,8 @@ export async function buildSite(options = {}) {
     author: options.author || fileConfig.author || options.title || fileConfig.title || 'Author',
     description: options.description || fileConfig.description || '一个由 Markdown 与 GitHub Actions 驱动的技术博客',
     logo: options.logo || fileConfig.logo || (options.title || fileConfig.title || 'M').slice(0, 1).toUpperCase(),
-    baseUrl, categories
+    baseUrl, categories,
+    assetVersion: createHash('sha256').update(siteStyles).update(siteScript).digest('hex').slice(0, 10)
   };
 
   await rm(output, { recursive: true, force: true });
@@ -170,7 +174,7 @@ export async function buildSite(options = {}) {
   }
   await mkdir(path.join(output, 'assets'), { recursive: true });
   await writeFile(path.join(output, 'assets/blog.css'), siteStyles);
-  await writeFile(path.join(output, 'assets/blog.js'), `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});`);
+  await writeFile(path.join(output, 'assets/blog.js'), siteScript);
 
   const sorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.order - a.order);
   const fallingTokens = ['const', 'ideas', '=', '[', 'learn', 'build', 'share', ']', 'async', 'await', 'run()', '{}'];
