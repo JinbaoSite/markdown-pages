@@ -46,6 +46,26 @@ export function createRenderer(options = {}) {
   });
   md.use(mathjax3);
 
+  // Some legacy documents request MathJax extensions that are unavailable in
+  // the synchronous renderer. Keep one such formula from aborting the entire
+  // static-site build and preserve its TeX as readable fallback content.
+  for (const ruleName of ['math_inline', 'math_block']) {
+    const mathRenderer = md.renderer.rules[ruleName];
+    if (!mathRenderer) continue;
+    md.renderer.rules[ruleName] = (tokens, index, rendererOptions, env, self) => {
+      try {
+        return mathRenderer(tokens, index, rendererOptions, env, self);
+      } catch (error) {
+        error?.retry?.catch?.(() => {});
+        const source = escapeHtml(tokens[index].content);
+        if (ruleName === 'math_inline') {
+          return `<code class="math-fallback">${source}</code>`;
+        }
+        return `<pre class="math-fallback math-fallback-block"><code>${source}</code></pre>`;
+      }
+    };
+  }
+
   md.renderer.rules.heading_open = (tokens, index, rendererOptions, env, self) => {
     const token = tokens[index];
     const inline = tokens[index + 1];

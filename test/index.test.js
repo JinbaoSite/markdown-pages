@@ -16,6 +16,12 @@ test('renders inline and block math as MathJax SVG', () => {
   assert.match(html, /<svg/);
 });
 
+test('preserves unsupported legacy math without aborting rendering', () => {
+  const html = renderMarkdown('$$\\require{AMScd}\\begin{CD} A @>>> B \\end{CD}$$');
+  assert.match(html, /class="math-fallback math-fallback-block"/);
+  assert.match(html, /\\require\{AMScd\}/);
+});
+
 test('creates a complete document and disables raw HTML by default', () => {
   const html = renderMarkdown('<script>alert(1)</script>', { fullDocument: true, title: '<Demo>' });
   assert.match(html, /^<!doctype html>/);
