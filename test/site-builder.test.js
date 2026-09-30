@@ -44,7 +44,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(article, /<aside class="article-toc">/);
     assert.match(article, /<mjx-container/);
     assert.match(article, /src="\/docs\/img\/diagram\.png"/);
-    assert.match(article, /<h1 id="attention">Attention<\/h1><p class="article-views">本页总阅读量 <b id="busuanzi_page_pv">加载中\.\.\.<\/b> 次<\/p>/);
+    assert.match(article, /<h1 id="attention">Attention<\/h1><p class="article-views">总阅读量 <b id="busuanzi_page_pv">加载中\.\.\.<\/b> 次<\/p>/);
     assert.match(article, /本站总访问量 <b id="busuanzi_site_pv">加载中\.\.\.<\/b> 次/);
     assert.match(article, /cdn\.busuanzi\.cc\/busuanzi\/3\.6\.9\/busuanzi\.min\.js/);
     assert.equal(legacyArticle, article);

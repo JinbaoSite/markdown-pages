@@ -198,7 +198,7 @@ function rewriteSitePaths(html, baseUrl) {
 function addArticleViews(html) {
   return html.replace(
     /(<h1\b[^>]*>[\s\S]*?<\/h1>)/i,
-    '$1<p class="article-views">本页总阅读量 <b id="busuanzi_page_pv">加载中...</b> 次</p>'
+    '$1<p class="article-views">总阅读量 <b id="busuanzi_page_pv">加载中...</b> 次</p>'
   );
 }
 
