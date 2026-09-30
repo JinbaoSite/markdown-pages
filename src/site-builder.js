@@ -141,8 +141,9 @@ function layout({ config, title, description, body, active = '', extraClass = ''
 <a class="brand" href="${base}"><span class="brand-icon">${lucide('book')}</span>${escapeHtml(config.title)}</a>
 ${navigation}
 </div>${mobileNavigation}</header>
-${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</footer>
-<script src="${href(base, `assets/blog.js?v=${config.assetVersion}`)}"></script></body></html>`;
+${body}<footer><span>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</span><span class="footer-views">本站总访问量 <b id="busuanzi_site_pv">加载中...</b> 次</span></footer>
+<script src="${href(base, `assets/blog.js?v=${config.assetVersion}`)}"></script>
+<script src="https://cdn.busuanzi.cc/busuanzi/3.6.9/busuanzi.min.js" defer></script></body></html>`;
 }
 
 function postCard(article, base) {
@@ -192,6 +193,13 @@ function rewriteSitePaths(html, baseUrl) {
     if (`/${target}`.startsWith(`${prefix}/`)) return match;
     return `${attribute}="${prefix}/${target}"`;
   });
+}
+
+function addArticleViews(html) {
+  return html.replace(
+    /(<h1\b[^>]*>[\s\S]*?<\/h1>)/i,
+    '$1<p class="article-views">本页总阅读量 <b id="busuanzi_page_pv">加载中...</b> 次</p>'
+  );
 }
 
 export async function buildSite(options = {}) {
@@ -275,7 +283,7 @@ export async function buildSite(options = {}) {
 
   for (const post of posts) {
     const rendered = renderMarkdownWithMetadata(post.markdown, { allowHtml: false });
-    const content = rewriteSitePaths(rewriteMarkdownLinks(rendered.html), baseUrl);
+    const content = addArticleViews(rewriteSitePaths(rewriteMarkdownLinks(rendered.html), baseUrl));
     const body = `<div class="article-shell">${tocHtml(rendered.headings)}<main class="article"><div class="article-meta"><a href="${href(baseUrl, `${post.category.slug}/`)}">${categoryIcon(post.category.slug)}${escapeHtml(post.category.name)}</a>${post.date ? `<time>${post.date}</time>` : ''}</div><article class="markdown-body">${content}</article></main></div>`;
     const document = layout({ config, title: post.title, description: post.description, body, active: post.category.slug, extraClass: 'article-page' });
     const cleanTarget = path.join(output, post.url, 'index.html');
