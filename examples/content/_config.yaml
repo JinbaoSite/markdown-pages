@@ -2,6 +2,7 @@ title: Markdown Blog
 author: Jinbao
 description: 一个由 Markdown 与 GitHub Actions 驱动的技术博客
 base_url: /
+posts_per_page: 5
 
 categories:
   llm:

@@ -88,6 +88,7 @@ description: 记录机器学习、深度学习、LLM、推荐算法与 Agent
 logo: J
 base_url: /
 cname: www.dongjinbao.com
+posts_per_page: 5
 
 categories:
   ml:
@@ -114,6 +115,7 @@ categories:
 | `logo` | 左上角 Logo 中的文本 |
 | `base_url` | GitHub Project Pages 子路径 |
 | `cname` | 自定义域名 |
+| `posts_per_page` | 分类列表每页文章数，必须为正整数，默认为 `5` |
 | `categories` | 分类名称和图标映射 |
 
 Action 或 CLI 中明确传入的参数优先于 `_config.yaml`，因此同一份内容可以在不同环境中使用不同域名或基础路径。配置文件只参与构建，不会复制到发布目录。

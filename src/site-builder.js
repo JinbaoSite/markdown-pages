@@ -35,7 +35,19 @@ function categoryIcon(slug) {
   return lucide({ ml: 'brain', dl: 'brain', llm: 'code', recsys: 'database', agent: 'bot', projects: 'terminal' }[slug] ?? 'folder');
 }
 
-const siteScript = `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});`;
+const siteScript = `document.querySelector('.menu-toggle')?.addEventListener('click',e=>{const n=document.querySelector('.mobile-nav');const open=n.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',open)});
+document.querySelectorAll('[data-pagination]').forEach(pagination=>{
+  const list=document.getElementById(pagination.dataset.list);
+  const cards=[...list.querySelectorAll('.post-card')];
+  const perPage=Math.max(1,Number(pagination.dataset.perPage)||5);
+  const totalPages=Math.ceil(cards.length/perPage);
+  let currentPage=1;
+  const range=()=>{const lo=Math.max(2,currentPage-1);const hi=Math.min(totalPages-1,currentPage+1);const values=[];if(lo>2)values.push('…');for(let page=lo;page<=hi;page++)values.push(page);if(hi<totalPages-1)values.push('…');return totalPages>1?[1,...values,totalPages]:[1]};
+  const button=(label,page,className='')=>label==='…'?'<span class="page-ellipsis" aria-hidden="true">…</span>':'<button class="page-btn'+className+(page===currentPage?' active':'')+'" data-page="'+page+'"'+(page===currentPage?' aria-current="page"':'')+((className.includes('prev')&&currentPage===1)||(className.includes('next')&&currentPage===totalPages)?' disabled':'')+'>'+label+'</button>';
+  const render=()=>{const start=(currentPage-1)*perPage;cards.forEach((card,index)=>card.hidden=index<start||index>=start+perPage);if(totalPages<=1){pagination.innerHTML='';return;}pagination.innerHTML=button('‹ 上一页',currentPage-1,' nav prev')+range().map(page=>button(page,page)).join('')+button('下一页 ›',currentPage+1,' nav next')+'<span class="page-info">第 '+currentPage+' / '+totalPages+' 页 · 共 '+cards.length+' 篇</span>';};
+  pagination.addEventListener('click',event=>{const target=event.target.closest('[data-page]');if(!target||target.disabled)return;const page=Number(target.dataset.page);if(page<1||page>totalPages||page===currentPage)return;currentPage=page;render();list.scrollIntoView({behavior:'smooth',block:'start'});});
+  render();
+});`;
 
 const escapeHtml = (value = '') => String(value)
   .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -226,12 +238,14 @@ export async function buildSite(options = {}) {
     });
   }
   const categories = [...new Map(posts.map(post => [post.category.slug, post.category])).values()];
+  const configuredPerPage = Number(fileConfig.posts_per_page ?? fileConfig.per_page ?? 5);
   const config = {
     title: options.title || fileConfig.title || 'Markdown Blog',
     author: options.author || fileConfig.author || options.title || fileConfig.title || 'Author',
     description: options.description || fileConfig.description || '一个由 Markdown 与 GitHub Actions 驱动的技术博客',
     logo: options.logo || fileConfig.logo || (options.title || fileConfig.title || 'M').slice(0, 1).toUpperCase(),
     baseUrl, categories,
+    postsPerPage: Number.isInteger(configuredPerPage) && configuredPerPage > 0 ? configuredPerPage : 5,
     assetVersion: createHash('sha256').update(siteStyles).update(siteScript).digest('hex').slice(0, 10)
   };
 
@@ -252,7 +266,8 @@ export async function buildSite(options = {}) {
 
   for (const category of categories) {
     const listPage = listPages.get(category.slug) ?? { title: category.name, subtitle: '', articles: [] };
-    const body = `<main class="container list-page"><p class="eyebrow">${categoryIcon(category.slug)} CATEGORY</p><h1>${escapeHtml(listPage.title)}</h1>${listPage.subtitle ? `<p>${escapeHtml(listPage.subtitle)}</p>` : ''}<p>${listPage.articles.length} 篇文章</p><div class="post-list">${listPage.articles.map(article => postCard(article, baseUrl)).join('')}</div></main>`;
+    const listId = `article-list-${category.slug}`;
+    const body = `<main class="container list-page"><p class="eyebrow">${categoryIcon(category.slug)} CATEGORY</p><h1>${escapeHtml(listPage.title)}</h1>${listPage.subtitle ? `<p>${escapeHtml(listPage.subtitle)}</p>` : ''}<p>${listPage.articles.length} 篇文章</p><div class="post-list" id="${escapeHtml(listId)}">${listPage.articles.map(article => postCard(article, baseUrl)).join('')}</div><nav class="pagination" data-pagination data-list="${escapeHtml(listId)}" data-per-page="${config.postsPerPage}" aria-label="文章分页"></nav></main>`;
     const dir = path.join(output, category.slug);
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, 'index.html'), layout({ config, title: category.name, body, active: category.slug }));
