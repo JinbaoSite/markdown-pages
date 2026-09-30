@@ -160,7 +160,24 @@ attention = nn.MultiheadAttention(64, 4, batch_first=True)
 ```
 ````
 
-### Front matter
+### 列表页 `index.md`
+
+每个分类目录使用 `index.md` 的 `article-list` 生成列表页，卡片不会从文章 Front Matter 补充内容：
+
+```yaml
+---
+title: LLM
+subtitle: 大语言模型、RAG、推理优化
+article-list:
+  - article-title: 注意力机制
+    article-url: /llm/attention
+    article-date: 2026-07-07
+    article-desc: 这里填写需要完整展示的文章摘要。
+    article-tags: [Attention, Transformer]
+---
+```
+
+### 文章 Front matter
 
 文章可以在 Markdown 内部添加可选元数据：
 
@@ -172,7 +189,6 @@ date: 2026-08-31
 order: 10
 draft: false
 category: recsys
-tags: [推荐系统, CTR, Deep Learning]
 ---
 
 # 正文标题
@@ -186,7 +202,6 @@ tags: [推荐系统, CTR, Deep Learning]
 | `order` | number | 日期相同时的辅助排序值 |
 | `draft` | boolean | 设置为 `true` 时不构建该文章 |
 | `category` | string | 覆盖一级目录推断出的分类 |
-| `tags` / `tag` | array/string | 分类列表卡片底部展示的文章标签；字符串可用逗号分隔，未设置时使用分类名 |
 
 ## 使用 GitHub Actions 发布
 

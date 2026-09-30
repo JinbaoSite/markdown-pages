@@ -133,10 +133,33 @@ ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. L
 <script src="${href(base, `assets/blog.js?v=${config.assetVersion}`)}"></script></body></html>`;
 }
 
-function postCard(post, base) {
-  const tags = post.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('');
-  return `<a class="post-card" href="${href(base, post.url)}"><div class="post-card-content"><h3>${escapeHtml(post.title)}</h3>
-  <p>${escapeHtml(post.description)}</p><div class="post-card-footer"><div class="post-tags">${tags}</div><span class="post-meta">${post.date ? `<time>${post.date}</time>` : ''}<b aria-hidden="true">→</b></span></div></div></a>`;
+function postCard(article, base) {
+  const tags = article.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('');
+  return `<a class="post-card" href="${href(base, article.url)}"><div class="post-card-heading"><h3 class="article-title">${escapeHtml(article.title)}</h3>${article.date ? `<time class="article-date">${article.date}</time>` : ''}</div>
+  <p class="article-desc">${escapeHtml(article.description)}</p><div class="article-tags">${tags}</div></a>`;
+}
+
+function normalizeArticleUrl(value, categorySlug) {
+  const url = String(value || '').trim();
+  if (/^(?:https?:)?\/\//i.test(url)) return url;
+  const pathname = url.replace(/^\/+|\/+$/g, '') || categorySlug;
+  return `${pathname}/`;
+}
+
+function listPageInfo(data, slug) {
+  const category = categoryInfo(slug);
+  const articles = Array.isArray(data?.['article-list']) ? data['article-list'] : [];
+  return {
+    title: data?.title || category.name,
+    subtitle: data?.subtitle || '',
+    articles: articles.map(article => ({
+      title: article?.['article-title'] || '',
+      url: normalizeArticleUrl(article?.['article-url'], slug),
+      date: formatDate(article?.['article-date']),
+      description: String(article?.['article-desc'] || ''),
+      tags: normalizeTags(article?.['article-tags'])
+    })).filter(article => article.title)
+  };
 }
 
 function tocHtml(headings) {
@@ -170,18 +193,25 @@ export async function buildSite(options = {}) {
   const baseUrl = normalizeBase(options.baseUrl || fileConfig.baseUrl || fileConfig.base_url || '/');
   const files = await walkSource(source, source, output);
   const posts = [];
+  const listPages = new Map();
   for (const relative of files.markdown.sort()) {
     const basename = path.basename(relative).toLowerCase();
-    if (basename === 'readme.md' || basename === 'index.md') continue;
+    if (basename === 'readme.md') continue;
     const raw = await readFile(path.join(source, relative), 'utf8');
     const parsed = matter(raw);
+    if (basename === 'index.md') {
+      const parts = relative.split(path.sep);
+      if (parts.length > 1 && parts[0] !== 'about') {
+        listPages.set(parts[0], listPageInfo(parsed.data, parts[0]));
+      }
+      continue;
+    }
     if (parsed.data.draft === true) continue;
     const withoutExtension = relative.replace(/\.md$/i, '');
     const parts = withoutExtension.split(path.sep);
     const categorySlug = parts.length > 1 ? parts[0] : 'posts';
     const fallback = path.basename(withoutExtension).replace(/[-_]/g, ' ');
     const category = categoryInfo(parsed.data.category || categorySlug, fileConfig.categories);
-    const tags = normalizeTags(parsed.data.tags ?? parsed.data.tag);
     posts.push({
       source: relative,
       markdown: parsed.content,
@@ -189,7 +219,6 @@ export async function buildSite(options = {}) {
       title: parsed.data.title || firstHeading(parsed.content, fallback),
       description: parsed.data.description || plainText(parsed.content).slice(0, 150),
       date: formatDate(parsed.data.date),
-      tags: tags.length ? tags : [category.name],
       order: Number(parsed.data.order ?? 0),
       category,
       url: `${withoutExtension.split(path.sep).join('/')}/`,
@@ -216,15 +245,14 @@ export async function buildSite(options = {}) {
   await writeFile(path.join(output, 'assets/blog.css'), siteStyles);
   await writeFile(path.join(output, 'assets/blog.js'), siteScript);
 
-  const sorted = [...posts].sort((a, b) => (b.date || '').localeCompare(a.date || '') || b.order - a.order);
   const fallingTokens = ['const', 'ideas', '=', '[', 'learn', 'build', 'share', ']', 'async', 'await', 'run()', '{}'];
   const rain = fallingTokens.map((token, index) => `<span style="--i:${index}">${escapeHtml(token)}</span>`).join('');
   const homeBody = `<main class="animation-home"><div class="code-rain" aria-hidden="true">${rain}</div><section class="code-stage" aria-label="代码落下并运行的动画"><div class="stage-heading"><p>LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span></div><div class="code-machine"><div class="machine-bar"><i></i><i></i><i></i><span>build.js</span><b>CSS ANIMATION</b></div><div class="assembled-code"><span class="code-line line-1"><em>const</em> knowledge = [];</span><span class="code-line line-2"><em>await</em> learn(knowledge);</span><span class="code-line line-3">knowledge.<strong>push</strong>(idea);</span><span class="code-line line-4"><em>return</em> publish(knowledge);</span></div><div class="run-console"><span class="run-command">$ npm run build</span><span class="run-progress"><i></i></span><span class="run-result">✓ Blog compiled successfully</span><span class="run-cursor"></span></div></div></section></main>`;
   await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page' }));
 
   for (const category of categories) {
-    const categoryPosts = sorted.filter(post => post.category.slug === category.slug);
-    const body = `<main class="container list-page"><p class="eyebrow">${categoryIcon(category.slug)} CATEGORY</p><h1>${escapeHtml(category.name)}</h1><p>${categoryPosts.length} 篇文章</p><div class="post-list">${categoryPosts.map(post => postCard(post, baseUrl)).join('')}</div></main>`;
+    const listPage = listPages.get(category.slug) ?? { title: category.name, subtitle: '', articles: [] };
+    const body = `<main class="container list-page"><p class="eyebrow">${categoryIcon(category.slug)} CATEGORY</p><h1>${escapeHtml(listPage.title)}</h1>${listPage.subtitle ? `<p>${escapeHtml(listPage.subtitle)}</p>` : ''}<p>${listPage.articles.length} 篇文章</p><div class="post-list">${listPage.articles.map(article => postCard(article, baseUrl)).join('')}</div></main>`;
     const dir = path.join(output, category.slug);
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, 'index.html'), layout({ config, title: category.name, body, active: category.slug }));
