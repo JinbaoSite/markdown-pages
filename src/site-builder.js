@@ -106,6 +106,12 @@ function formatDate(value) {
   return Number.isNaN(date.valueOf()) ? String(value) : date.toISOString().slice(0, 10);
 }
 
+function normalizeTags(value) {
+  if (Array.isArray(value)) return value.map(String).map(tag => tag.trim()).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map(tag => tag.trim()).filter(Boolean);
+  return [];
+}
+
 function layout({ config, title, description, body, active = '', extraClass = '', minimalNav = false }) {
   const base = config.baseUrl;
   const nav = minimalNav ? '' : config.categories.map(category =>
@@ -128,8 +134,9 @@ ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. L
 }
 
 function postCard(post, base) {
-  return `<a class="post-card" href="${href(base, post.url)}"><div><h3>${escapeHtml(post.title)}</h3>
-  <p>${escapeHtml(post.description)}</p></div><span class="post-meta">${escapeHtml(post.category.name)}${post.date ? ` · ${post.date}` : ''} →</span></a>`;
+  const tags = post.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('');
+  return `<a class="post-card" href="${href(base, post.url)}"><div class="post-card-content"><h3>${escapeHtml(post.title)}</h3>
+  <p>${escapeHtml(post.description)}</p><div class="post-card-footer"><div class="post-tags">${tags}</div><span class="post-meta">${post.date ? `<time>${post.date}</time>` : ''}<b aria-hidden="true">→</b></span></div></div></a>`;
 }
 
 function tocHtml(headings) {
@@ -173,6 +180,8 @@ export async function buildSite(options = {}) {
     const parts = withoutExtension.split(path.sep);
     const categorySlug = parts.length > 1 ? parts[0] : 'posts';
     const fallback = path.basename(withoutExtension).replace(/[-_]/g, ' ');
+    const category = categoryInfo(parsed.data.category || categorySlug, fileConfig.categories);
+    const tags = normalizeTags(parsed.data.tags ?? parsed.data.tag);
     posts.push({
       source: relative,
       markdown: parsed.content,
@@ -180,8 +189,9 @@ export async function buildSite(options = {}) {
       title: parsed.data.title || firstHeading(parsed.content, fallback),
       description: parsed.data.description || plainText(parsed.content).slice(0, 150),
       date: formatDate(parsed.data.date),
+      tags: tags.length ? tags : [category.name],
       order: Number(parsed.data.order ?? 0),
-      category: categoryInfo(parsed.data.category || categorySlug, fileConfig.categories),
+      category,
       url: `${withoutExtension.split(path.sep).join('/')}/`,
       legacyUrl: `${withoutExtension.split(path.sep).join('/')}.html`
     });

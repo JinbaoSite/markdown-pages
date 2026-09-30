@@ -172,6 +172,7 @@ date: 2026-08-31
 order: 10
 draft: false
 category: recsys
+tags: [推荐系统, CTR, Deep Learning]
 ---
 
 # 正文标题
@@ -185,6 +186,7 @@ category: recsys
 | `order` | number | 日期相同时的辅助排序值 |
 | `draft` | boolean | 设置为 `true` 时不构建该文章 |
 | `category` | string | 覆盖一级目录推断出的分类 |
+| `tags` / `tag` | array/string | 分类列表卡片底部展示的文章标签；字符串可用逗号分隔，未设置时使用分类名 |
 
 ## 使用 GitHub Actions 发布
 

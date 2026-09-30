@@ -10,7 +10,7 @@ test('builds a complete blog from markdown folders', async () => {
   const source = path.join(temporary, 'content');
   const output = path.join(temporary, '_site');
   await mkdir(path.join(source, 'llm'), { recursive: true });
-  await writeFile(path.join(source, 'llm', 'attention.md'), '# Attention\n\n## Formula\n\n$E=mc^2$\n\n![diagram](/img/diagram.png)');
+  await writeFile(path.join(source, 'llm', 'attention.md'), '---\ntags: [Transformer, Attention]\n---\n\n# Attention\n\n## Formula\n\n$E=mc^2$\n\n![diagram](/img/diagram.png)');
   await writeFile(path.join(source, 'llm', 'index.md'), '# Category landing page');
   await writeFile(path.join(source, '_config.yaml'), 'title: Config Blog\nauthor: Config Author\ncategories:\n  llm: 大语言模型\n');
   await writeFile(path.join(source, 'custom.html'), '<h1>Custom page</h1>');
@@ -26,6 +26,8 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(categoryPage, /大语言模型/);
     assert.doesNotMatch(home, /href="\/docs\/llm\/attention\/"/);
     assert.match(categoryPage, /href="\/docs\/llm\/attention\/"/);
+    assert.match(categoryPage, /class="post-tags"><span>Transformer<\/span><span>Attention<\/span>/);
+    assert.doesNotMatch(categoryPage, /class="post-meta">大语言模型/);
     assert.match(home, /LEARNING BY DOING/);
     assert.doesNotMatch(home, /最近文章/);
     assert.doesNotMatch(home, /class="category-card"/);
