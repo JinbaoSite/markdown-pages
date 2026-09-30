@@ -1,5 +1,5 @@
-name: Markdown Pages
-description: 将只包含 Markdown 的仓库构建成可部署到 GitHub Pages 的博客
+name: Markdown Blog Pages Builder
+description: Build a Markdown-only repository into a polished GitHub Pages blog
 inputs:
   source:
     description: Markdown 内容目录
@@ -47,3 +47,6 @@ runs:
         if [[ -n "$INPUT_BASE_URL" ]]; then args+=(--base-url "$INPUT_BASE_URL"); fi
         if [[ -n "$INPUT_CNAME" ]]; then args+=(--cname "$INPUT_CNAME"); fi
         node "$GITHUB_ACTION_PATH/bin/markdown-blog.js" "${args[@]}"
+branding:
+  icon: file-text
+  color: blue
