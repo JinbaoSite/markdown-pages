@@ -146,8 +146,8 @@ ${body}<footer>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. L
 }
 
 function postCard(article, base) {
-  const tags = article.tags.map(tag => `<span>${escapeHtml(tag)}</span>`).join('');
-  return `<a class="post-card" href="${href(base, article.url)}"><div class="post-card-heading"><h3 class="article-title">${escapeHtml(article.title)}</h3>${article.date ? `<time class="article-date">${article.date}</time>` : ''}</div>
+  const tags = article.tags.map(tag => `<span class="article-tag">${escapeHtml(tag)}</span>`).join('');
+  return `<a class="post-card" href="${href(base, article.url)}"><div class="article-header"><span class="article-title">${escapeHtml(article.title)}</span>${article.date ? `<time class="article-date">${article.date}</time>` : ''}</div>
   <p class="article-desc">${escapeHtml(article.description)}</p><div class="article-tags">${tags}</div></a>`;
 }
 

@@ -29,7 +29,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(categoryPage, /Attention from index/);
     assert.match(categoryPage, /This complete description comes from index\.md\./);
     assert.match(categoryPage, /class="article-date">2026-09-30<\/time>/);
-    assert.match(categoryPage, /class="article-tags"><span>Transformer<\/span><span>Attention<\/span>/);
+    assert.match(categoryPage, /class="article-tags"><span class="article-tag">Transformer<\/span><span class="article-tag">Attention<\/span>/);
     assert.doesNotMatch(categoryPage, /<span>大语言模型<\/span>/);
     assert.doesNotMatch(categoryPage, /class="post-meta">大语言模型/);
     assert.match(categoryPage, /class="pagination" data-pagination data-list="article-list-llm" data-per-page="1"/);
