@@ -50,16 +50,17 @@ document.querySelectorAll('[data-pagination]').forEach(pagination=>{
 });
 document.querySelectorAll('[data-gomoku]').forEach(game=>{
   const stones=[...game.querySelectorAll('[data-move]')];
-  const feed=game.closest('.gomoku-stage').querySelector('[data-gomoku-feed]');
+  const feed=game.querySelector('[data-gomoku-feed]');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   let timers=[];
   const clear=()=>{timers.forEach(clearTimeout);timers=[];};
-  const finish=()=>{game.dataset.phase='finished';feed.textContent='第 9 手 · AI-01 · G7 · 五子连线';};
+  const updateFeed=text=>{if(feed)feed.textContent=text;};
+  const finish=()=>{game.dataset.phase='finished';updateFeed('AI-01 WIN · AI-02 LOSS');};
   const play=()=>{
-    clear();game.dataset.phase='playing';stones.forEach(stone=>stone.classList.remove('placed'));feed.textContent='AI 正在计算第一手…';
+    clear();game.dataset.phase='playing';stones.forEach(stone=>stone.classList.remove('placed'));updateFeed('AI 正在计算第一手…');
     if(reduced){stones.forEach(stone=>stone.classList.add('placed'));finish();return;}
-    stones.forEach((stone,index)=>timers.push(setTimeout(()=>{stone.classList.add('placed');feed.textContent='第 '+(index+1)+' 手 · '+stone.dataset.player+' · '+stone.dataset.point;if(index===stones.length-1)finish();},700+index*650)));
-    timers.push(setTimeout(()=>{game.dataset.phase='resetting';feed.textContent='对局结束 · 即将重新开始';},9300));
+    stones.forEach((stone,index)=>timers.push(setTimeout(()=>{stone.classList.add('placed');updateFeed('第 '+(index+1)+' 手 · '+stone.dataset.player+' · '+stone.dataset.point);if(index===stones.length-1)finish();},700+index*650)));
+    timers.push(setTimeout(()=>{game.dataset.phase='resetting';updateFeed('对局结束 · 即将重新开始');},9300));
     timers.push(setTimeout(play,10500));
   };
   play();
@@ -291,7 +292,7 @@ export async function buildSite(options = {}) {
     ['black', 6, 6, 'AI-01', 'G7']
   ];
   const stones = moves.map(([color, x, y, player, point], index) => `<i class="gomoku-stone ${color}" style="--x:${x};--y:${y}" data-move="${index + 1}" data-player="${player}" data-point="${point}" aria-label="第 ${index + 1} 手，${player} 落子 ${point}"></i>`).join('');
-  const homeBody = `<main class="gomoku-home"><section class="gomoku-stage" aria-label="两个 AI 完成一局五子棋的动画"><div class="gomoku-intro"><p>AI SELF-PLAY · GOMOKU</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span><div class="match-feed"><i></i><b data-gomoku-feed>AI 正在计算第一手…</b></div></div><div class="gomoku-arena" data-gomoku data-phase="playing"><header><span>SELF-PLAY / MATCH 001</span><b>LIVE</b></header><div class="ai-player ai-one"><span class="ai-avatar black">01</span><div><b>AI-01</b><small>BLACK · ATTACK</small></div><strong>WIN</strong></div><div class="gomoku-board-wrap"><div class="gomoku-board" role="img" aria-label="9 乘 9 五子棋棋盘，AI-01 执黑以对角线五子获胜">${stones}<span class="winning-line" aria-hidden="true"></span></div></div><div class="ai-player ai-two"><span class="ai-avatar white">02</span><div><b>AI-02</b><small>WHITE · DEFENSE</small></div><strong>LOSS</strong></div></div></section></main>`;
+  const homeBody = `<main class="gomoku-home"><section class="gomoku-only" data-gomoku data-phase="playing" aria-label="两个 AI 完成一局五子棋的动画"><div class="gomoku-board" role="img" aria-label="9 乘 9 五子棋棋盘，AI-01 执黑以对角线五子获胜">${stones}<span class="winning-line" aria-hidden="true"></span><span class="gomoku-result" aria-live="polite"><b>WIN</b><i>/</i><strong>LOSS</strong></span></div></section></main>`;
   await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page' }));
 
   for (const category of categories) {
