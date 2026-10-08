@@ -62,6 +62,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(styles, /body\{min-height:100vh;display:flex;flex-direction:column\}/);
     assert.match(styles, /footer\{width:100%;margin-top:auto/);
     assert.match(styles, /\.article-toc::-webkit-scrollbar\{width:3px;height:3px\}/);
+    assert.match(styles, /grid-template-columns:minmax\(68px,120px\) minmax\(150px,1fr\) minmax\(68px,120px\)/);
     assert.equal(await readFile(path.join(output, 'CNAME'), 'utf8'), 'example.com\n');
   } finally {
     await rm(temporary, { recursive: true, force: true });
