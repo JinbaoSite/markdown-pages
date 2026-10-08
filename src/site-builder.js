@@ -149,6 +149,12 @@ function normalizeTags(value) {
 
 function layout({ config, title, description, body, active = '', extraClass = '', minimalNav = false }) {
   const base = config.baseUrl;
+  const logoValue = String(config.logo || config.title.slice(0, 1)).trim();
+  const logoIsImage = /^(?:https?:\/\/|data:image\/|\/|\.\/|\.\.\/)|\.(?:svg|png|jpe?g|gif|webp|avif)(?:[?#].*)?$/i.test(logoValue);
+  const logoSource = /^(?:https?:\/\/|data:image\/)/i.test(logoValue) ? logoValue : href(base, logoValue);
+  const logoContent = logoIsImage
+    ? `<img src="${escapeHtml(logoSource)}" alt="" width="32" height="32">`
+    : escapeHtml(logoValue.slice(0, 2));
   const nav = minimalNav ? '' : config.navigationCategories.map(category =>
     `<a${active === category.slug ? ' class="active"' : ''} href="${href(base, `${category.slug}/`)}">${categoryIcon(category.slug)}${escapeHtml(category.name)}</a>`
   ).join('');
@@ -161,7 +167,7 @@ function layout({ config, title, description, body, active = '', extraClass = ''
 <meta name="description" content="${escapeHtml(description || config.description)}">
 <link rel="stylesheet" href="${href(base, `assets/blog.css?v=${config.assetVersion}`)}"></head>
 <body class="${extraClass}"><header class="site-header"><div class="header-inner">
-<a class="brand" href="${base}"><span class="brand-icon">${lucide('book')}</span>${escapeHtml(config.title)}</a>
+<a class="brand" href="${base}"><span class="brand-icon">${logoContent}</span>${escapeHtml(config.title)}</a>
 ${navigation}
 </div>${mobileNavigation}</header>
 ${body}<footer><span>© ${new Date().getUTCFullYear()} ${escapeHtml(config.author)}. Learning by Doing.</span><span class="footer-views">本站总访问量 <b id="busuanzi_site_pv">加载中...</b> 次</span></footer>

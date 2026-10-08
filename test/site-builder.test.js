@@ -12,7 +12,7 @@ test('builds a complete blog from markdown folders', async () => {
   await mkdir(path.join(source, 'llm'), { recursive: true });
   await writeFile(path.join(source, 'llm', 'attention.md'), '# Attention\n\n## Formula\n\n$E=mc^2$\n\n![diagram](/img/diagram.png)');
   await writeFile(path.join(source, 'llm', 'index.md'), '---\ntitle: 大语言模型列表\nsubtitle: 模型与推理\narticle-list:\n  - article-title: Attention from index\n    article-url: /llm/attention\n    article-date: 2026-09-30\n    article-desc: This complete description comes from index.md.\n    article-tags: [Transformer, Attention]\n---');
-  await writeFile(path.join(source, '_config.yaml'), 'title: Config Blog\nauthor: Config Author\nposts_per_page: 1\ncategories:\n  llm: 大语言模型\n');
+  await writeFile(path.join(source, '_config.yaml'), 'title: Config Blog\nauthor: Config Author\nlogo: JB\nposts_per_page: 1\ncategories:\n  llm: 大语言模型\n');
   await writeFile(path.join(source, 'custom.html'), '<h1>Custom page</h1>');
   try {
     const result = await buildSite({ source, output, title: 'Test Blog', baseUrl: '/docs/', cname: 'example.com' });
@@ -34,6 +34,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.doesNotMatch(categoryPage, /class="post-meta">大语言模型/);
     assert.match(categoryPage, /class="pagination" data-pagination data-list="article-list-llm" data-per-page="1"/);
     assert.match(home, /class="site-header"/);
+    assert.match(home, /<span class="brand-icon">JB<\/span>/);
     assert.doesNotMatch(home, /最近文章/);
     assert.doesNotMatch(home, /class="category-card"/);
     assert.match(home, /class="gomoku-board"/);
