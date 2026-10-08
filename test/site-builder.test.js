@@ -37,7 +37,9 @@ test('builds a complete blog from markdown folders', async () => {
     assert.doesNotMatch(home, /最近文章/);
     assert.doesNotMatch(home, /class="category-card"/);
     assert.match(home, /class="gomoku-board"/);
-    assert.match(home, /class="gomoku-thinking"/);
+    assert.match(home, /data-ai-stats="1"/);
+    assert.match(home, /data-ai-stats="2"/);
+    assert.equal((home.match(/class="ai-icon"/g) || []).length, 2);
     assert.doesNotMatch(home, /class="gomoku-intro"/);
     assert.match(home, /class="lucide /);
     assert.match(home, /class="desktop-nav"/);
@@ -55,6 +57,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(script, /const minimax=/);
     assert.match(script, /beta<=alpha/);
     assert.match(script, /const evaluate=/);
+    assert.match(script, /Math\.random/);
     const styles = await readFile(path.join(output, 'assets/blog.css'), 'utf8');
     assert.match(styles, /body\{min-height:100vh;display:flex;flex-direction:column\}/);
     assert.match(styles, /footer\{width:100%;margin-top:auto/);
