@@ -149,7 +149,7 @@ function normalizeTags(value) {
 
 function layout({ config, title, description, body, active = '', extraClass = '', minimalNav = false }) {
   const base = config.baseUrl;
-  const nav = minimalNav ? '' : config.categories.map(category =>
+  const nav = minimalNav ? '' : config.navigationCategories.map(category =>
     `<a${active === category.slug ? ' class="active"' : ''} href="${href(base, `${category.slug}/`)}">${categoryIcon(category.slug)}${escapeHtml(category.name)}</a>`
   ).join('');
   const navigation = minimalNav ? '' : `<nav class="desktop-nav"><a${active === 'home' ? ' class="active"' : ''} href="${base}">${lucide('home')}首页</a>${nav}<a${active === 'about' ? ' class="active"' : ''} href="${href(base, 'about/')}">${lucide('info')}关于</a></nav>
@@ -269,13 +269,18 @@ export async function buildSite(options = {}) {
     });
   }
   const categories = [...new Map(posts.map(post => [post.category.slug, post.category])).values()];
+  const requestedNavigation = Array.isArray(fileConfig.navigation) ? fileConfig.navigation.map(String) : [];
+  const categoryMap = new Map(categories.map(category => [category.slug, category]));
+  const navigationCategories = requestedNavigation.length
+    ? requestedNavigation.map(slug => categoryMap.get(slug)).filter(Boolean)
+    : categories;
   const configuredPerPage = Number(fileConfig.posts_per_page ?? fileConfig.per_page ?? 5);
   const config = {
     title: options.title || fileConfig.title || 'Markdown Blog',
     author: options.author || fileConfig.author || options.title || fileConfig.title || 'Author',
     description: options.description || fileConfig.description || '一个由 Markdown 与 GitHub Actions 驱动的技术博客',
     logo: options.logo || fileConfig.logo || (options.title || fileConfig.title || 'M').slice(0, 1).toUpperCase(),
-    baseUrl, categories,
+    baseUrl, categories, navigationCategories,
     postsPerPage: Number.isInteger(configuredPerPage) && configuredPerPage > 0 ? configuredPerPage : 5,
     assetVersion: createHash('sha256').update(siteStyles).update(siteScript).digest('hex').slice(0, 10)
   };
