@@ -49,21 +49,27 @@ document.querySelectorAll('[data-pagination]').forEach(pagination=>{
   render();
 });
 document.querySelectorAll('[data-gomoku]').forEach(game=>{
-  const stones=[...game.querySelectorAll('[data-move]')];
-  const feed=game.querySelector('[data-gomoku-feed]');
+  const size=9, board=Array.from({length:size},()=>Array(size).fill(0));
+  const boardElement=game.querySelector('.gomoku-board');
+  const thinking=game.querySelector('[data-thinking]');
+  const result=game.querySelector('.gomoku-result');
+  const winLine=game.querySelector('.winning-line');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let timers=[];
-  const clear=()=>{timers.forEach(clearTimeout);timers=[];};
-  const updateFeed=text=>{if(feed)feed.textContent=text;};
-  const finish=()=>{game.dataset.phase='finished';updateFeed('AI-01 WIN · AI-02 LOSS');};
-  const play=()=>{
-    clear();game.dataset.phase='playing';stones.forEach(stone=>stone.classList.remove('placed'));updateFeed('AI 正在计算第一手…');
-    if(reduced){stones.forEach(stone=>stone.classList.add('placed'));finish();return;}
-    stones.forEach((stone,index)=>timers.push(setTimeout(()=>{stone.classList.add('placed');updateFeed('第 '+(index+1)+' 手 · '+stone.dataset.player+' · '+stone.dataset.point);if(index===stones.length-1)finish();},700+index*650)));
-    timers.push(setTimeout(()=>{game.dataset.phase='resetting';updateFeed('对局结束 · 即将重新开始');},9300));
-    timers.push(setTimeout(play,10500));
+  const directions=[[1,0],[0,1],[1,1],[1,-1]], inside=(x,y)=>x>=0&&y>=0&&x<size&&y<size;
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,reduced?0:ms));
+  const findWin=()=>{for(let y=0;y<size;y++)for(let x=0;x<size;x++){const player=board[y][x];if(!player)continue;for(const [dx,dy] of directions){const line=[];for(let step=0;step<5;step++){const nx=x+dx*step,ny=y+dy*step;if(!inside(nx,ny)||board[ny][nx]!==player)break;line.push([nx,ny]);}if(line.length===5)return{player,line};}}return null;};
+  const evaluate=root=>{const weight=[0,2,18,130,1800,100000];let score=0;for(let y=0;y<size;y++)for(let x=0;x<size;x++){const player=board[y][x];if(!player)continue;for(const [dx,dy] of directions){if(inside(x-dx,y-dy)&&board[y-dy][x-dx]===player)continue;let count=0,nx=x,ny=y;while(inside(nx,ny)&&board[ny][nx]===player){count++;nx+=dx;ny+=dy;}const open=(inside(x-dx,y-dy)&&board[y-dy][x-dx]===0?1:0)+(inside(nx,ny)&&board[ny][nx]===0?1:0);const value=weight[Math.min(count,5)]*(open===2?1.7:open===1?1:0.12);score+=(player===root?1:-1.08)*value;}}return score;};
+  const candidates=(player,limit=10)=>{const points=[];let occupied=0;for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(board[y][x])occupied++;if(!occupied)return[[4,4]];for(let y=0;y<size;y++)for(let x=0;x<size;x++){if(board[y][x])continue;let near=false;for(let dy=-1;dy<=1&&!near;dy++)for(let dx=-1;dx<=1;dx++)if(inside(x+dx,y+dy)&&board[y+dy][x+dx]){near=true;break;}if(!near)continue;board[y][x]=player;const win=findWin();let priority=win?1e9:evaluate(player);board[y][x]=3-player;const blocks=findWin();if(blocks)priority+=8e8;board[y][x]=0;priority-=Math.abs(4-x)+Math.abs(4-y);points.push([x,y,priority]);}return points.sort((a,b)=>b[2]-a[2]||a[1]-b[1]||a[0]-b[0]).slice(0,limit).map(([x,y])=>[x,y]);};
+  const minimax=(depth,alpha,beta,toMove,root,stats)=>{stats.nodes++;const win=findWin();if(win)return win.player===root?10000000+depth:-10000000-depth;if(depth===0)return evaluate(root);const moves=candidates(toMove,depth>1?8:6);if(!moves.length)return evaluate(root);const maximize=toMove===root;let best=maximize?-Infinity:Infinity;for(const [x,y] of moves){board[y][x]=toMove;const value=minimax(depth-1,alpha,beta,3-toMove,root,stats);board[y][x]=0;if(maximize){best=Math.max(best,value);alpha=Math.max(alpha,best);}else{best=Math.min(best,value);beta=Math.min(beta,best);}if(beta<=alpha){stats.prunes++;break;}}return best;};
+  const chooseMove=async player=>{const moves=candidates(player,12),stats={nodes:0,prunes:0};let best=null,bestScore=-Infinity;for(let index=0;index<moves.length;index++){const [x,y]=moves[index];board[y][x]=player;const score=minimax(2,-Infinity,Infinity,3-player,player,stats);board[y][x]=0;if(score>bestScore){bestScore=score;best=[x,y];}thinking.innerHTML='<b>AI-0'+player+' THINKING</b><span>DEPTH 3 · '+(index+1)+'/'+moves.length+' CANDIDATES</span><span>'+stats.nodes+' NODES · '+stats.prunes+' PRUNES · SCORE '+Math.round(bestScore)+'</span>';await wait(34);}return best;};
+  const place=(x,y,player,move)=>{board[y][x]=player;const stone=document.createElement('i');stone.className='gomoku-stone '+(player===1?'black':'white');stone.style.setProperty('--x',x);stone.style.setProperty('--y',y);stone.dataset.move=move;boardElement.append(stone);requestAnimationFrame(()=>stone.classList.add('placed'));};
+  const showResult=win=>{const [[sx,sy],[ex,ey]]= [win.line[0],win.line[4]];const dx=ex-sx,dy=ey-sy;winLine.style.left=(sx*12.5)+'%';winLine.style.top=(sy*12.5)+'%';winLine.style.width=(Math.hypot(dx,dy)*12.5)+'%';winLine.style.setProperty('--angle',Math.atan2(dy,dx)*180/Math.PI+'deg');result.innerHTML='<b>AI-0'+win.player+' WIN</b><i>/</i><strong>AI-0'+(3-win.player)+' LOSS</strong>';game.dataset.phase='finished';thinking.hidden=true;};
+  const play=async()=>{game.dataset.phase='playing';thinking.hidden=false;result.innerHTML='';winLine.removeAttribute('style');board.forEach(row=>row.fill(0));boardElement.querySelectorAll('.gomoku-stone').forEach(stone=>stone.remove());for(let move=1;move<=size*size;move++){const player=move%2?1:2;const choice=await chooseMove(player);if(!choice)break;place(choice[0],choice[1],player,move);await wait(260);const win=findWin();if(win){showResult(win);await wait(3600);game.dataset.phase='resetting';await wait(700);return play();}}result.innerHTML='<b>DRAW</b>';game.dataset.phase='finished';thinking.hidden=true;await wait(3000);game.dataset.phase='resetting';await wait(700);play();};
+  const start=()=>{
+    thinking.innerHTML='<b>MINIMAX</b><span>ALPHA-BETA · HEURISTIC SEARCH</span>';
+    play();
   };
-  play();
+  start();
 });`;
 
 const escapeHtml = (value = '') => String(value)
@@ -284,15 +290,7 @@ export async function buildSite(options = {}) {
   await writeFile(path.join(output, 'assets/blog.css'), siteStyles);
   await writeFile(path.join(output, 'assets/blog.js'), siteScript);
 
-  const moves = [
-    ['black', 2, 2, 'AI-01', 'C3'], ['white', 2, 3, 'AI-02', 'C4'],
-    ['black', 3, 3, 'AI-01', 'D4'], ['white', 3, 4, 'AI-02', 'D5'],
-    ['black', 4, 4, 'AI-01', 'E5'], ['white', 4, 5, 'AI-02', 'E6'],
-    ['black', 5, 5, 'AI-01', 'F6'], ['white', 5, 6, 'AI-02', 'F7'],
-    ['black', 6, 6, 'AI-01', 'G7']
-  ];
-  const stones = moves.map(([color, x, y, player, point], index) => `<i class="gomoku-stone ${color}" style="--x:${x};--y:${y}" data-move="${index + 1}" data-player="${player}" data-point="${point}" aria-label="第 ${index + 1} 手，${player} 落子 ${point}"></i>`).join('');
-  const homeBody = `<main class="gomoku-home"><section class="gomoku-only" data-gomoku data-phase="playing" aria-label="两个 AI 完成一局五子棋的动画"><div class="gomoku-board" role="img" aria-label="9 乘 9 五子棋棋盘，AI-01 执黑以对角线五子获胜">${stones}<span class="winning-line" aria-hidden="true"></span><span class="gomoku-result" aria-live="polite"><b>WIN</b><i>/</i><strong>LOSS</strong></span></div></section></main>`;
+  const homeBody = `<main class="gomoku-home"><section class="gomoku-only" data-gomoku data-phase="playing" aria-label="两个使用 Minimax 与 Alpha-Beta 剪枝的 AI 实时进行五子棋对局"><div class="gomoku-board" role="img" aria-label="9 乘 9 AI 五子棋棋盘"><span class="gomoku-thinking" data-thinking aria-live="polite"><b>MINIMAX</b><span>ALPHA-BETA · HEURISTIC SEARCH</span></span><span class="winning-line" aria-hidden="true"></span><span class="gomoku-result" aria-live="polite"></span></div></section></main>`;
   await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page' }));
 
   for (const category of categories) {

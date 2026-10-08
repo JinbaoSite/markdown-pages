@@ -37,9 +37,8 @@ test('builds a complete blog from markdown folders', async () => {
     assert.doesNotMatch(home, /最近文章/);
     assert.doesNotMatch(home, /class="category-card"/);
     assert.match(home, /class="gomoku-board"/);
-    assert.equal((home.match(/data-move="\d+"/g) || []).length, 9);
-    assert.match(home, />WIN<\/b>/);
-    assert.match(home, />LOSS<\/strong>/);
+    assert.match(home, /class="gomoku-thinking"/);
+    assert.doesNotMatch(home, /class="gomoku-intro"/);
     assert.match(home, /class="lucide /);
     assert.match(home, /class="desktop-nav"/);
     assert.match(home, /assets\/blog\.css\?v=[a-f0-9]{10}/);
@@ -51,7 +50,11 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(article, /cdn\.busuanzi\.cc\/busuanzi\/3\.6\.9\/busuanzi\.min\.js/);
     assert.equal(legacyArticle, article);
     assert.equal(await readFile(path.join(output, 'custom.html'), 'utf8'), '<h1>Custom page</h1>');
-    assert.match(await readFile(path.join(output, 'assets/blog.js'), 'utf8'), /下一页/);
+    const script = await readFile(path.join(output, 'assets/blog.js'), 'utf8');
+    assert.match(script, /下一页/);
+    assert.match(script, /const minimax=/);
+    assert.match(script, /beta<=alpha/);
+    assert.match(script, /const evaluate=/);
     const styles = await readFile(path.join(output, 'assets/blog.css'), 'utf8');
     assert.match(styles, /body\{min-height:100vh;display:flex;flex-direction:column\}/);
     assert.match(styles, /footer\{width:100%;margin-top:auto/);
