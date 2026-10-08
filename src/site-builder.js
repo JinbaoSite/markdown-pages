@@ -47,6 +47,22 @@ document.querySelectorAll('[data-pagination]').forEach(pagination=>{
   const render=()=>{const start=(currentPage-1)*perPage;cards.forEach((card,index)=>card.hidden=index<start||index>=start+perPage);if(totalPages<=1){pagination.innerHTML='';return;}pagination.innerHTML=button('‹ 上一页',currentPage-1,' nav prev')+range().map(page=>button(page,page)).join('')+button('下一页 ›',currentPage+1,' nav next')+'<span class="page-info">第 '+currentPage+' / '+totalPages+' 页 · 共 '+cards.length+' 篇</span>';};
   pagination.addEventListener('click',event=>{const target=event.target.closest('[data-page]');if(!target||target.disabled)return;const page=Number(target.dataset.page);if(page<1||page>totalPages||page===currentPage)return;currentPage=page;render();list.scrollIntoView({behavior:'smooth',block:'start'});});
   render();
+});
+document.querySelectorAll('[data-gomoku]').forEach(game=>{
+  const stones=[...game.querySelectorAll('[data-move]')];
+  const feed=game.closest('.gomoku-stage').querySelector('[data-gomoku-feed]');
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let timers=[];
+  const clear=()=>{timers.forEach(clearTimeout);timers=[];};
+  const finish=()=>{game.dataset.phase='finished';feed.textContent='第 9 手 · AI-01 · G7 · 五子连线';};
+  const play=()=>{
+    clear();game.dataset.phase='playing';stones.forEach(stone=>stone.classList.remove('placed'));feed.textContent='AI 正在计算第一手…';
+    if(reduced){stones.forEach(stone=>stone.classList.add('placed'));finish();return;}
+    stones.forEach((stone,index)=>timers.push(setTimeout(()=>{stone.classList.add('placed');feed.textContent='第 '+(index+1)+' 手 · '+stone.dataset.player+' · '+stone.dataset.point;if(index===stones.length-1)finish();},700+index*650)));
+    timers.push(setTimeout(()=>{game.dataset.phase='resetting';feed.textContent='对局结束 · 即将重新开始';},9300));
+    timers.push(setTimeout(play,10500));
+  };
+  play();
 });`;
 
 const escapeHtml = (value = '') => String(value)
@@ -267,9 +283,15 @@ export async function buildSite(options = {}) {
   await writeFile(path.join(output, 'assets/blog.css'), siteStyles);
   await writeFile(path.join(output, 'assets/blog.js'), siteScript);
 
-  const fallingTokens = ['const', 'ideas', '=', '[', 'learn', 'build', 'share', ']', 'async', 'await', 'run()', '{}'];
-  const rain = fallingTokens.map((token, index) => `<span style="--i:${index}">${escapeHtml(token)}</span>`).join('');
-  const homeBody = `<main class="animation-home"><div class="code-rain" aria-hidden="true">${rain}</div><section class="code-stage" aria-label="代码落下并运行的动画"><div class="stage-heading"><p>LEARNING BY DOING</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span></div><div class="code-machine"><div class="machine-bar"><i></i><i></i><i></i><span>build.js</span><b>CSS ANIMATION</b></div><div class="assembled-code"><span class="code-line line-1"><em>const</em> knowledge = [];</span><span class="code-line line-2"><em>await</em> learn(knowledge);</span><span class="code-line line-3">knowledge.<strong>push</strong>(idea);</span><span class="code-line line-4"><em>return</em> publish(knowledge);</span></div><div class="run-console"><span class="run-command">$ npm run build</span><span class="run-progress"><i></i></span><span class="run-result">✓ Blog compiled successfully</span><span class="run-cursor"></span></div></div></section></main>`;
+  const moves = [
+    ['black', 2, 2, 'AI-01', 'C3'], ['white', 2, 3, 'AI-02', 'C4'],
+    ['black', 3, 3, 'AI-01', 'D4'], ['white', 3, 4, 'AI-02', 'D5'],
+    ['black', 4, 4, 'AI-01', 'E5'], ['white', 4, 5, 'AI-02', 'E6'],
+    ['black', 5, 5, 'AI-01', 'F6'], ['white', 5, 6, 'AI-02', 'F7'],
+    ['black', 6, 6, 'AI-01', 'G7']
+  ];
+  const stones = moves.map(([color, x, y, player, point], index) => `<i class="gomoku-stone ${color}" style="--x:${x};--y:${y}" data-move="${index + 1}" data-player="${player}" data-point="${point}" aria-label="第 ${index + 1} 手，${player} 落子 ${point}"></i>`).join('');
+  const homeBody = `<main class="gomoku-home"><section class="gomoku-stage" aria-label="两个 AI 完成一局五子棋的动画"><div class="gomoku-intro"><p>AI SELF-PLAY · GOMOKU</p><h1>${escapeHtml(config.title)}</h1><span>${escapeHtml(config.description)}</span><div class="match-feed"><i></i><b data-gomoku-feed>AI 正在计算第一手…</b></div></div><div class="gomoku-arena" data-gomoku data-phase="playing"><header><span>SELF-PLAY / MATCH 001</span><b>LIVE</b></header><div class="ai-player ai-one"><span class="ai-avatar black">01</span><div><b>AI-01</b><small>BLACK · ATTACK</small></div><strong>WIN</strong></div><div class="gomoku-board-wrap"><div class="gomoku-board" role="img" aria-label="9 乘 9 五子棋棋盘，AI-01 执黑以对角线五子获胜">${stones}<span class="winning-line" aria-hidden="true"></span></div></div><div class="ai-player ai-two"><span class="ai-avatar white">02</span><div><b>AI-02</b><small>WHITE · DEFENSE</small></div><strong>LOSS</strong></div></div></section></main>`;
   await writeFile(path.join(output, 'index.html'), layout({ config, title: '首页', body: homeBody, active: 'home', extraClass: 'home-page' }));
 
   for (const category of categories) {

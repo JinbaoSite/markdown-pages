@@ -33,11 +33,13 @@ test('builds a complete blog from markdown folders', async () => {
     assert.doesNotMatch(categoryPage, /<span>大语言模型<\/span>/);
     assert.doesNotMatch(categoryPage, /class="post-meta">大语言模型/);
     assert.match(categoryPage, /class="pagination" data-pagination data-list="article-list-llm" data-per-page="1"/);
-    assert.match(home, /LEARNING BY DOING/);
+    assert.match(home, /AI SELF-PLAY · GOMOKU/);
     assert.doesNotMatch(home, /最近文章/);
     assert.doesNotMatch(home, /class="category-card"/);
-    assert.match(home, /class="code-rain"/);
-    assert.match(home, /Blog compiled successfully/);
+    assert.match(home, /class="gomoku-board"/);
+    assert.equal((home.match(/data-move="\d+"/g) || []).length, 9);
+    assert.match(home, />WIN<\/strong>/);
+    assert.match(home, />LOSS<\/strong>/);
     assert.match(home, /class="lucide /);
     assert.match(home, /class="desktop-nav"/);
     assert.match(home, /assets\/blog\.css\?v=[a-f0-9]{10}/);
