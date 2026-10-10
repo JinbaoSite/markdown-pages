@@ -36,3 +36,12 @@ test('creates a linked table of contents for full documents', () => {
   assert.match(html, /<h2 id="重复">重复<\/h2>/);
   assert.match(html, /<h2 id="重复-2">重复<\/h2>/);
 });
+
+test('renders inline MathJax inside table of contents headings', () => {
+  const html = renderMarkdown('# 文档\n\n## 复杂度 $O(n^2)$\n\n内容', { fullDocument: true });
+  const toc = html.match(/<aside class="toc"[\s\S]*?<\/aside>/)?.[0] ?? '';
+  assert.match(toc, /href="#复杂度-o-n-2"/);
+  assert.match(toc, /<mjx-container/);
+  assert.match(toc, /<svg/);
+  assert.doesNotMatch(toc, /\$O\(n\^2\)\$/);
+});

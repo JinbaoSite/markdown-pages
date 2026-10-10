@@ -10,7 +10,7 @@ test('builds a complete blog from markdown folders', async () => {
   const source = path.join(temporary, 'content');
   const output = path.join(temporary, '_site');
   await mkdir(path.join(source, 'llm'), { recursive: true });
-  await writeFile(path.join(source, 'llm', 'attention.md'), '# Attention\n\n## Formula\n\n$E=mc^2$\n\n![diagram](/img/diagram.png)');
+  await writeFile(path.join(source, 'llm', 'attention.md'), '# Attention\n\n## Formula $E=mc^2$\n\n$E=mc^2$\n\n![diagram](/img/diagram.png)');
   await writeFile(path.join(source, 'llm', 'index.md'), '---\ntitle: 大语言模型列表\nsubtitle: 模型与推理\narticle-list:\n  - article-title: Attention from index\n    article-url: /llm/attention\n    article-date: 2026-09-30\n    article-desc: This complete description comes from index.md.\n    article-tags: [Transformer, Attention]\n---');
   await writeFile(path.join(source, '_config.yaml'), 'title: Config Blog\nauthor: Config Author\nlogo: JB\nposts_per_page: 1\ncategories:\n  llm: 大语言模型\n');
   await writeFile(path.join(source, 'custom.html'), '<h1>Custom page</h1>');
@@ -46,6 +46,7 @@ test('builds a complete blog from markdown folders', async () => {
     assert.match(home, /class="desktop-nav"/);
     assert.match(home, /assets\/blog\.css\?v=[a-f0-9]{10}/);
     assert.match(article, /<aside class="article-toc">/);
+    assert.match(article.match(/<aside class="article-toc">[\s\S]*?<\/aside>/)?.[0] ?? '', /<mjx-container/);
     assert.match(article, /<mjx-container/);
     assert.match(article, /src="\/docs\/img\/diagram\.png"/);
     assert.match(article, /<h1 id="attention">Attention<\/h1><p class="article-views">总阅读量 <b id="busuanzi_page_pv">加载中\.\.\.<\/b> 次<\/p>/);

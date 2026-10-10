@@ -207,7 +207,7 @@ function listPageInfo(data, slug) {
 function tocHtml(headings) {
   if (headings.length < 2) return '';
   return `<aside class="article-toc"><strong>目录</strong><nav>${headings.map(item =>
-    `<a class="toc-${item.level}" href="#${escapeHtml(item.id)}">${escapeHtml(item.text)}</a>`
+    `<a class="toc-${item.level}" href="#${escapeHtml(item.id)}">${item.html ?? escapeHtml(item.text)}</a>`
   ).join('')}</nav></aside>`;
 }
 

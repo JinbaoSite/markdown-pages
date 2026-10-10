@@ -22,8 +22,8 @@ function slugifyHeading(text, fallback) {
 
 function renderToc(headings) {
   if (!headings.length) return '';
-  const links = headings.map(({ level, text, id }) =>
-    `<a class="toc-level-${level}" href="#${escapeHtml(id)}">${escapeHtml(text)}</a>`
+  const links = headings.map(({ level, text, html, id }) =>
+    `<a class="toc-level-${level}" href="#${escapeHtml(id)}">${html ?? escapeHtml(text)}</a>`
   ).join('\n');
   return `<aside class="toc" aria-label="文章目录">
   <div class="toc-title">目录</div>
@@ -70,6 +70,10 @@ export function createRenderer(options = {}) {
     const token = tokens[index];
     const inline = tokens[index + 1];
     const text = inline?.content ?? '';
+    const html = inline?.children
+      ? self.renderInline(inline.children, rendererOptions, env)
+        .replace(/<a\b[^>]*>/gi, '').replace(/<\/a>/gi, '')
+      : escapeHtml(text);
     env.headings ??= [];
     env.headingIds ??= new Map();
     const base = slugifyHeading(text, `section-${env.headings.length + 1}`);
@@ -77,7 +81,7 @@ export function createRenderer(options = {}) {
     env.headingIds.set(base, count + 1);
     const id = count === 0 ? base : `${base}-${count + 1}`;
     token.attrSet('id', id);
-    env.headings.push({ level: Number(token.tag.slice(1)), text, id });
+    env.headings.push({ level: Number(token.tag.slice(1)), text, html, id });
     return self.renderToken(tokens, index, rendererOptions);
   };
 
