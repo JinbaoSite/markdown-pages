@@ -1,13 +1,13 @@
 export const tableStyles = `
 .markdown-body .table-wrap { width: 100%; max-width: 1000px; margin: 20px auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.markdown-body table { width: 100%; min-width: 760px; margin: 0; border-collapse: collapse; border-spacing: 0; color: #080808; background: #fff; font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 28px; line-height: 1.35; }
+.markdown-body table { width: 100%; min-width: 760px; margin: 0; border-collapse: collapse; border-spacing: 0; color: #080808; background: #fff; font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: inherit; line-height: 1.35; }
 .markdown-body th, .markdown-body td { padding: 15px 20px; text-align: right; white-space: nowrap; }
 .markdown-body th:first-child, .markdown-body td:first-child { text-align: left; }
 .markdown-body thead th { font-weight: 700; border-bottom: 2px solid #555; }
 .markdown-body tbody tr:not(:last-child) td { border-bottom: 2px solid #d4d4d4; }
 .markdown-body td:not(:first-child) { font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) {
-  .markdown-body table { min-width: 600px; font-size: 20px; }
+  .markdown-body table { min-width: 600px; }
   .markdown-body th, .markdown-body td { padding: 12px 16px; }
 }
 `;
