@@ -1,3 +1,17 @@
+export const tableStyles = `
+.markdown-body .table-wrap { width: 100%; max-width: 1000px; margin: 20px auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.markdown-body table { width: 100%; min-width: 760px; margin: 0; border-collapse: collapse; border-spacing: 0; color: #080808; background: #fff; font-family: Arial, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 28px; line-height: 1.35; }
+.markdown-body th, .markdown-body td { padding: 15px 20px; text-align: right; white-space: nowrap; }
+.markdown-body th:first-child, .markdown-body td:first-child { text-align: left; }
+.markdown-body thead th { font-weight: 700; border-bottom: 2px solid #555; }
+.markdown-body tbody tr:not(:last-child) td { border-bottom: 2px solid #d4d4d4; }
+.markdown-body td:not(:first-child) { font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) {
+  .markdown-body table { min-width: 600px; font-size: 20px; }
+  .markdown-body th, .markdown-body td { padding: 12px 16px; }
+}
+`;
+
 export const defaultStyles = `
 :root { color-scheme: light dark; scroll-behavior: smooth; }
 body { margin: 0; padding: 2rem; font: 16px/1.7 system-ui, sans-serif; }
@@ -22,14 +36,7 @@ pre.code-block code { display: block; flex: 1; min-width: max-content; padding: 
 code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 :not(pre) > code { padding: .15em .35em; border-radius: 4px; background: color-mix(in srgb, currentColor 10%, transparent); }
 blockquote { margin-left: 0; padding-left: 1rem; border-left: 4px solid #8c959f; color: #656d76; }
-table { width: 100%; margin: 1rem 0; border-spacing: 0; border-collapse: separate; border: 1px solid #d0d7de; border-radius: 6px; overflow: hidden; }
-th, td { padding: .55rem .8rem; border-right: 1px solid #d0d7de; border-bottom: 1px solid #d0d7de; text-align: left; }
-th:last-child, td:last-child { border-right: 0; }
-tr:last-child td { border-bottom: 0; }
-thead th { background: #f6f8fa; font-weight: 600; }
-tbody tr:nth-child(even) td { background: #f6f8fa; }
-tbody td { transition: background-color .15s ease; }
-tbody tr:hover td { background: #ddf4ff; }
+${tableStyles}
 .hljs-comment, .hljs-quote { color: #6e7781; }
 .hljs-keyword, .hljs-selector-tag, .hljs-literal { color: #cf222e; }
 .hljs-string, .hljs-doctag, .hljs-regexp { color: #0a3069; }
@@ -40,10 +47,6 @@ tbody tr:hover td { background: #ddf4ff; }
 @media (prefers-color-scheme: dark) {
   pre, .line-numbers { border-color: #30363d; background: #0d1117; color: #c9d1d9; }
   .line-numbers { color: #6e7681; }
-  table { border-color: #30363d; }
-  th, td { border-color: #30363d; }
-  thead th, tbody tr:nth-child(even) td { background: #161b22; }
-  tbody tr:hover td { background: #1c2d41; }
   .toc { border-color: #30363d; }
   .toc-title { color: #c9d1d9; }
   .toc a { color: #8b949e; }

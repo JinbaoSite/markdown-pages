@@ -111,6 +111,13 @@ export function createRenderer(options = {}) {
     return defaultLinkOpen(tokens, index, rendererOptions, env, self);
   };
 
+  // Keep wide tables inside the article on small screens.
+  md.renderer.rules.table_open = (tokens, index, rendererOptions, env, self) =>
+    '<div class="table-wrap" tabindex="0" role="region" aria-label="可横向滚动的表格">\n'
+    + self.renderToken(tokens, index, rendererOptions);
+  md.renderer.rules.table_close = (tokens, index, rendererOptions, env, self) =>
+    self.renderToken(tokens, index, rendererOptions) + '</div>\n';
+
   return md;
 }
 
